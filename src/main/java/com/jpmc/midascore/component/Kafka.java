@@ -11,6 +11,14 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import com.jpmc.midascore.entity.UserRecord;
+import com.jpmc.midascore.foundation.Balance;
+import com.jpmc.midascore.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 @Component
 public class Kafka {
     private final UserRepository userRepository;
@@ -61,6 +69,29 @@ public class Kafka {
         transactionRecordRepository.save(transactionRecord);
 
     }
+
+    @RestController
+    public class BalanceController {
+
+        private final UserRepository userRepository;
+
+        @Autowired
+        public BalanceController(UserRepository userRepository) {
+            this.userRepository = userRepository;
+        }
+
+        @GetMapping("/balance")
+        public Balance getBalance(@RequestParam(name = "userId") Long userId) {
+            UserRecord user = userRepository.findById(userId).orElse(null);
+
+            if (user == null) {
+                return new Balance(0.0f);
+            }
+
+            return new Balance(user.getBalance());
+        }
+    }
+
 
 }
 
