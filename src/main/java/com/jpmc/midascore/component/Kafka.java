@@ -5,9 +5,11 @@ import com.jpmc.midascore.entity.UserRecord;
 import com.jpmc.midascore.foundation.Transaction;
 import com.jpmc.midascore.repository.TransactionRecordRepository;
 import com.jpmc.midascore.repository.UserRepository;
+import com.jpmc.midascore.foundation.Incentive;
 import jakarta.transaction.Transactional;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 @Component
 public class Kafka {
@@ -40,9 +42,15 @@ public class Kafka {
             return;
         }
 
-        // 3. Execution
+        // Task 4
+        String url = "http://localhost:8080/incentive";
+        RestTemplate restTemplate = new RestTemplate(); // Note: Ideally, inject this via constructor
+        Incentive incentive = restTemplate.postForObject(url, transaction, Incentive.class);
+
+        float incentiveAmount = (incentive != null) ? incentive.getAmount() : 0;
+
         sender.setBalance(sender.getBalance() - transaction.getAmount());
-        recipient.setBalance(recipient.getBalance() + transaction.getAmount());
+        recipient.setBalance(recipient.getBalance() + transaction.getAmount() + incentiveAmount);
 
         // 4. Persistence: Save changes to database
         userRepository.save(sender);
